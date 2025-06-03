@@ -1,0 +1,47 @@
+<div class="layout-wrapper">
+  <p-toolbar>
+    <div class="p-toolbar-group-start">
+      <img
+        src="assets/logo.png"
+        alt="Logo da Plataforma"
+        height="40"
+        class="mr-2"
+      />
+      <span class="font-bold text-xl">Plataforma de Oportunidades</span>
+    </div>
+    <div class="p-toolbar-group-end">
+      <button
+        pButton
+        type="button"
+        label="Vagas"
+        icon="pi pi-briefcase"
+        class="p-button-text"
+        [routerLink]="['/vagas']"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Cursos"
+        icon="pi pi-book"
+        class="p-button-text ml-2"
+        [routerLink]="['/cursos']"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Registrar Usuário"
+        icon="pi pi-user-plus"
+        class="p-button-text ml-2"
+        [routerLink]="['/registro']"
+      ></button>
+    </div>
+  </p-toolbar>
+
+  <div class="layout-main-content p-4">
+    <router-outlet></router-outlet>
+  </div>
+
+  <footer class="layout-footer p-4 text-center text-sm text-gray-500">
+    Plataforma de Oportunidades &copy; 2025 - Todos os direitos reservados.
+  </footer>
+</div>
