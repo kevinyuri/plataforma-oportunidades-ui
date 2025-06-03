@@ -10,6 +10,4 @@ export const routes: Routes = [
     component: CursosListComponent,
     title: 'Cursos de Capacitação',
   },
-  // Adicione uma rota curinga para página não encontrada, se desejar
-  // { path: '**', component: NotFoundComponent }
 ];

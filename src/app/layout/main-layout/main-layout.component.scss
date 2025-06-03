@@ -1,0 +1,15 @@
+.layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.layout-main-content {
+  flex-grow: 1;
+}
+
+:host ::ng-deep .p-toolbar {
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+}

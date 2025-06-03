@@ -1,0 +1,30 @@
+// src/app/pages/vagas/vagas-list/vagas-list.component.scss
+
+// Garante que o card ocupe a altura do seu container grid para alinhar os rodapés
+:host ::ng-deep .p-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  .p-card-body {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    padding-bottom: 2rem;
+  }
+
+  .p-card-content {
+    flex-grow: 1;
+    padding-bottom: 1rem;
+
+    .p-card-footer {
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 1px solid var(--surface-border);
+    }
+  }
+
+  .p-card-content p {
+    word-break: break-word;
+  }
+}

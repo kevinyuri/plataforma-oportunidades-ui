@@ -20,7 +20,5 @@ export const appConfig: ApplicationConfig = {
         preset: Aura,
       },
     }),
-    // Se você precisar de MessageService globalmente:
-    // importProvidersFrom(MessageService) // e importe MessageService de 'primeng/api'
   ],
 };
