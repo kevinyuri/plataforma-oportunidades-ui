@@ -6,7 +6,7 @@ import { MainLayoutComponent } from './layout/main-layout/main-layout.component'
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, MainLayoutComponent], // Adicione MainLayoutComponent aqui
-  template: ` <app-main-layout></app-main-layout> `,
+  template: ` <router-outlet></router-outlet> `,
   // styleUrls: ['./app.component.scss'] // Se tiver estilos globais aqui
 })
 export class AppComponent {

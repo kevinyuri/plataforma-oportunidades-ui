@@ -1,41 +1,51 @@
 <div class="layout-wrapper">
   <p-toolbar>
     <div class="p-toolbar-group-start">
-      <span class="font-bold text-xl">Plataforma de Oportunidades</span>
+      <span class="font-bold text-xl cursor-pointer" routerLink="/"
+        >Plataforma de Oportunidades</span
+      >
     </div>
-    <div class="p-toolbar-group-end">
-      <button
-        pButton
-        type="button"
+
+    <div class="p-toolbar-group-center">
+      <p-button
+        label="Dashboard"
+        icon="pi pi-home"
+        styleClass="p-button-text"
+        [routerLink]="['/dashboard']"
+      ></p-button>
+      <p-button
         label="Vagas"
         icon="pi pi-briefcase"
-        class="p-button-text"
+        styleClass="p-button-text ml-2"
         [routerLink]="['/vagas']"
-      ></button>
-      <button
-        pButton
-        type="button"
+      ></p-button>
+      <p-button
         label="Cursos"
         icon="pi pi-book"
-        class="p-button-text ml-2"
+        styleClass="p-button-text ml-2"
         [routerLink]="['/cursos']"
-      ></button>
-      <button
-        pButton
-        type="button"
-        label="Registrar Usuário"
-        icon="pi pi-user-plus"
-        class="p-button-text ml-2"
-        [routerLink]="['/registro']"
-      ></button>
+      ></p-button>
+    </div>
+
+    <div class="p-toolbar-group-end">
+      <span *ngIf="currentUser" class="mr-3"
+        >Olá, {{ currentUser.nome || currentUser.email }}</span
+      >
+      <p-button
+        icon="pi pi-user"
+        styleClass="p-button-rounded p-button-text mr-2"
+        (click)="irParaPerfil()"
+      ></p-button>
+      <p-button
+        label="Logout"
+        icon="pi pi-sign-out"
+        styleClass="p-button-danger p-button-text"
+        (click)="logout()"
+      ></p-button>
     </div>
   </p-toolbar>
 
-  <div class="layout-main-content p-4">
+  <div class="layout-main-content p-3 md:p-4">
     <router-outlet></router-outlet>
   </div>
-
-  <footer class="layout-footer p-4 text-center text-sm text-gray-500">
-    Plataforma de Oportunidades &copy; 2025 - Todos os direitos reservados.
-  </footer>
 </div>

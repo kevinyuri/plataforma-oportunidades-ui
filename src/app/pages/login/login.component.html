@@ -1,0 +1,86 @@
+<p-toast></p-toast>
+<div class="flex justify-content-center align-items-center min-h-screen px-3">
+  <p-card header="Acessar Plataforma" styleClass="w-full max-w-30rem">
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="p-fluid">
+        <div class="field">
+          <label for="email" class="block text-900 text-xl font-medium mb-2"
+            >E-mail</label
+          >
+          <span class="p-input-icon-left w-full">
+            <i class="pi pi-envelope"></i>
+            <input
+              pInputText
+              id="email"
+              class="w-full"
+              formControlName="email"
+              type="email"
+              placeholder="seuemail@exemplo.com"
+              [ngClass]="{
+                'ng-invalid ng-dirty': submitted && f['email'].errors
+              }"
+            />
+          </span>
+          <small
+            *ngIf="submitted && f['email'].errors?.['required']"
+            class="p-error block mt-1"
+            >E-mail é obrigatório.</small
+          >
+          <small
+            *ngIf="submitted && f['email'].errors?.['email']"
+            class="p-error block mt-1"
+            >Formato de e-mail inválido.</small
+          >
+        </div>
+
+        <div class="field mt-3">
+          <label for="senha" class="block text-900 text-xl font-medium mb-2"
+            >Senha</label
+          >
+          <p-password
+            id="senha"
+            formControlName="senha"
+            [toggleMask]="true"
+            [feedback]="false"
+            inputStyleClass="w-full"
+            styleClass="w-full"
+            placeholder="Sua senha"
+            [ngClass]="{
+              'ng-invalid ng-dirty': submitted && f['senha'].errors
+            }"
+          ></p-password>
+          <small
+            *ngIf="submitted && f['senha'].errors?.['required']"
+            class="p-error block mt-1"
+            >Senha é obrigatória.</small
+          >
+        </div>
+
+        <div class="flex align-items-center justify-content-end mt-2 mb-4">
+          <a
+            [routerLink]="['/auth/esqueci-senha']"
+            class="font-medium no-underline text-blue-500 text-right cursor-pointer"
+            >Esqueceu a senha?</a
+          >
+        </div>
+
+        <p-button
+          label="Entrar"
+          icon="pi pi-sign-in"
+          type="submit"
+          styleClass="w-full text-xl"
+          [loading]="isLoading"
+        ></p-button>
+
+        <div class="mt-4 text-center">
+          <span class="text-600 font-medium">Não tem uma conta?</span>
+          <a
+            [routerLink]="['/auth/registro']"
+            class="font-medium no-underline text-blue-500 ml-1 cursor-pointer"
+            >Crie uma agora!</a
+          >
+        </div>
+      </div>
+    </form>
+  </p-card>
+</div>

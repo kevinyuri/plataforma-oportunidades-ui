@@ -1,5 +1,5 @@
 import { ApplicationConfig, importProvidersFrom } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations'; // Para animações do PrimeNG
 import {
   provideHttpClient,
@@ -12,7 +12,7 @@ import { providePrimeNG } from 'primeng/config';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRouter(routes),
+    provideRouter(routes, withComponentInputBinding()),
     provideAnimations(), // Adicionar para animações
     provideHttpClient(withInterceptorsFromDi()), // Adicionar para serviços HTTP
     providePrimeNG({

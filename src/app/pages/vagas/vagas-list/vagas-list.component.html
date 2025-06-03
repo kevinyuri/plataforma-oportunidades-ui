@@ -1,9 +1,11 @@
 <p-toast></p-toast>
+<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
 
 <div class="vagas-list-container p-4">
   <div class="flex justify-content-between align-items-center mb-4">
     <h2 class="text-2xl font-bold my-0">Lista de Vagas Abertas</h2>
     <p-button
+      *ngIf="canManageVagas"
       label="Criar Nova Vaga"
       icon="pi pi-plus"
       (click)="abrirModalCriarVaga()"
@@ -37,7 +39,7 @@
       *ngFor="let vaga of vagas"
       class="col-12 md:col-6 lg:col-4 xl:col-3 p-2"
     >
-      <p-card styleClass="h-full flex flex-columnumn">
+      <p-card styleClass="h-full flex flex-column">
         <ng-template pTemplate="title">
           <span class="text-xl font-semibold">{{ vaga.titulo }}</span>
         </ng-template>
@@ -65,17 +67,36 @@
         </div>
 
         <ng-template pTemplate="footer">
-          <div class="flex justify-content-between align-items-center">
+          <div class="flex justify-content-between align-items-center mb-2">
             <p-button
               label="Ver Detalhes"
               icon="pi pi-eye"
               styleClass="p-button-sm p-button-outlined"
             ></p-button>
             <p-button
+              *ngIf="canInscribeInVagas"
               label="Inscrever-se"
               icon="pi pi-check"
               styleClass="p-button-sm p-button-success"
-              (click)="abrirModalInscricao(vaga.id)"
+              (click)="realizarInscricao(vaga.id)"
+              [loading]="isSubmittingInscricaoVaga"
+            >
+            </p-button>
+          </div>
+          <div *ngIf="canManageVagas" class="flex justify-content-end gap-2">
+            <p-button
+              icon="pi pi-pencil"
+              styleClass="p-button-sm p-button-info p-button-outlined"
+              (click)="abrirModalCriarVaga(vaga)"
+              pTooltip="Editar Vaga"
+              tooltipPosition="top"
+            ></p-button>
+            <p-button
+              icon="pi pi-trash"
+              styleClass="p-button-sm p-button-danger p-button-outlined"
+              (click)="confirmarDelecaoVaga(vaga.id)"
+              pTooltip="Deletar Vaga"
+              tooltipPosition="top"
             ></p-button>
           </div>
           <div class="text-xs text-gray-500 mt-2 text-right">
@@ -104,77 +125,17 @@
 </div>
 
 <p-dialog
-  header="Inscrever-se na Vaga"
-  [(visible)]="displayInscricaoModal"
-  [modal]="true"
-  [style]="{ width: '50vw', 'min-width': '300px', 'max-width': '500px' }"
-  [draggable]="false"
-  [resizable]="false"
-  (onHide)="fecharModalInscricao()"
->
-  <form [formGroup]="inscricaoForm" (ngSubmit)="onSubmitInscricao()">
-    <div class="p-fluid">
-      <div class="field">
-        <label for="usuarioIdInscricao">Seu ID de Usuário</label>
-        <input
-          pInputText
-          id="usuarioIdInscricao"
-          formControlName="usuarioId"
-          type="text"
-          [ngClass]="{
-            'ng-invalid ng-dirty':
-              fInscricao['usuarioId'].touched && fInscricao['usuarioId'].errors
-          }"
-        />
-        <small
-          *ngIf="fInscricao['usuarioId'].touched && fInscricao['usuarioId'].errors?.['required']"
-          class="p-error"
-        >
-          ID do Usuário é obrigatório.
-        </small>
-        <small
-          *ngIf="fInscricao['usuarioId'].touched && fInscricao['usuarioId'].errors?.['minlength']"
-          class="p-error"
-        >
-          ID do Usuário deve ter no mínimo 3 caracteres.
-        </small>
-      </div>
-    </div>
-    <div class="flex justify-content-end gap-2 mt-4">
-      <p-button
-        type="button"
-        label="Cancelar"
-        icon="pi pi-times"
-        styleClass="p-button-text"
-        (click)="fecharModalInscricao()"
-      ></p-button>
-      <p-button
-        type="submit"
-        label="Confirmar Inscrição"
-        icon="pi pi-check"
-        [loading]="isSubmittingInscricao"
-      ></p-button>
-    </div>
-  </form>
-</p-dialog>
-
-<p-dialog
-  header="Criar Nova Vaga"
+  [header]="isEditModeVaga ? 'Editar Vaga' : 'Criar Nova Vaga'"
   [(visible)]="displayCriarVagaModal"
   [modal]="true"
-  [style]="{
-    width: '70vw',
-    'min-width': '400px',
-    'max-width': '750px',
-    'min-height': '80vh'
-  }"
+  [style]="{ width: '70vw', 'min-width': '400px', 'max-width': '750px' }"
   [draggable]="false"
   [resizable]="false"
   (onHide)="fecharModalCriarVaga()"
 >
   <form [formGroup]="criarVagaForm" (ngSubmit)="onSubmitCriarVaga()">
     <div class="p-fluid">
-      <div class="flex flex-column gap-2 mb-3">
+      <div class="flex flex-col gap-2 mb-3">
         <label for="tituloVaga">Título da Vaga</label>
         <input
           pInputText
@@ -198,7 +159,7 @@
         >
       </div>
 
-      <div class="flex flex-column gap-2 mb-3">
+      <div class="flex flex-col gap-2 mb-3">
         <label for="descricaoVaga">Descrição Completa</label>
         <textarea
           pInputTextarea
@@ -223,7 +184,7 @@
         >
       </div>
 
-      <div class="flex flex-column gap-2 mb-3">
+      <div class="flex flex-col gap-2 mb-3">
         <label for="empresaVaga">Nome da Empresa (Opcional)</label>
         <input
           pInputText
@@ -233,14 +194,14 @@
         />
       </div>
 
-      <div class="flex flex-column gap-2 mb-3">
+      <div class="flex flex-col gap-2 mb-3">
         <label for="localVaga"
           >Local da Vaga (Ex: Fortaleza, CE ou Remoto)</label
         >
         <input pInputText id="localVaga" formControlName="local" type="text" />
       </div>
 
-      <div class="flex flex-column gap-2 mb-3">
+      <div class="flex flex-col gap-2 mb-3">
         <label for="tipoContratoVaga">Tipo de Contrato</label>
         <p-dropdown
           id="tipoContratoVaga"
@@ -263,8 +224,8 @@
       ></p-button>
       <p-button
         type="submit"
-        label="Salvar Vaga"
-        icon="pi pi-save"
+        [label]="isEditModeVaga ? 'Salvar Alterações' : 'Salvar Vaga'"
+        [icon]="isEditModeVaga ? 'pi pi-save' : 'pi pi-plus-circle'"
         [loading]="isSubmittingCriarVaga"
       ></p-button>
     </div>

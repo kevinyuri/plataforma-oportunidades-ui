@@ -1,0 +1,187 @@
+<p-toast></p-toast>
+<div class="flex justify-content-center align-items-center min-h-screen px-3">
+  <p-card header="Criar Nova Conta" styleClass="w-full max-w-50rem">
+    <form [formGroup]="registroForm" (ngSubmit)="onSubmit()">
+      <div class="p-fluid">
+        <div class="field">
+          <label for="nome" class="block text-900 text-xl font-medium mb-2"
+            >Nome Completo</label
+          >
+          <input
+            pInputText
+            id="nome"
+            formControlName="nome"
+            type="text"
+            class="w-full"
+            [ngClass]="{ 'ng-invalid ng-dirty': submitted && f['nome'].errors }"
+          />
+          <small
+            *ngIf="submitted && f['nome'].errors?.['required']"
+            class="p-error block mt-1"
+            >Nome é obrigatório.</small
+          >
+          <small
+            *ngIf="submitted && f['nome'].errors?.['minlength']"
+            class="p-error block mt-1"
+            >Nome deve ter no mínimo 3 caracteres.</small
+          >
+          <small
+            *ngIf="submitted && f['nome'].errors?.['maxlength']"
+            class="p-error block mt-1"
+            >Nome deve ter no máximo 100 caracteres.</small
+          >
+        </div>
+
+        <div class="field mt-3">
+          <label for="email" class="block text-900 text-xl font-medium mb-2"
+            >E-mail</label
+          >
+          <input
+            pInputText
+            id="email"
+            formControlName="email"
+            type="email"
+            class="w-full"
+            placeholder="seuemail@exemplo.com"
+            [ngClass]="{
+              'ng-invalid ng-dirty': submitted && f['email'].errors
+            }"
+          />
+          <small
+            *ngIf="submitted && f['email'].errors?.['required']"
+            class="p-error block mt-1"
+            >E-mail é obrigatório.</small
+          >
+          <small
+            *ngIf="submitted && f['email'].errors?.['email']"
+            class="p-error block mt-1"
+            >Formato de e-mail inválido.</small
+          >
+        </div>
+
+        <div class="field mt-3">
+          <label for="senha" class="block text-900 text-xl font-medium mb-2"
+            >Senha</label
+          >
+          <p-password
+            id="senha"
+            formControlName="senha"
+            [toggleMask]="true"
+            [feedback]="true"
+            inputStyleClass="w-full"
+            styleClass="w-full"
+            placeholder="Crie uma senha"
+            promptLabel="Digite uma senha"
+            weakLabel="Fraca"
+            mediumLabel="Média"
+            strongLabel="Forte"
+            [ngClass]="{
+              'ng-invalid ng-dirty': submitted && f['senha'].errors
+            }"
+          ></p-password>
+          <small
+            *ngIf="submitted && f['senha'].errors?.['required']"
+            class="p-error block mt-1"
+            >Senha é obrigatória.</small
+          >
+          <small
+            *ngIf="submitted && f['senha'].errors?.['minlength']"
+            class="p-error block mt-1"
+            >Senha deve ter no mínimo 6 caracteres.</small
+          >
+        </div>
+
+        <div class="field mt-3">
+          <label
+            for="confirmarSenha"
+            class="block text-900 text-xl font-medium mb-2"
+            >Confirmar Senha</label
+          >
+          <p-password
+            id="confirmarSenha"
+            formControlName="confirmarSenha"
+            [toggleMask]="true"
+            [feedback]="false"
+            inputStyleClass="w-full"
+            styleClass="w-full"
+            placeholder="Confirme sua senha"
+            [ngClass]="{
+              'ng-invalid ng-dirty':
+                submitted &&
+                (f['confirmarSenha'].errors ||
+                  registroForm.hasError('mismatch'))
+            }"
+          ></p-password>
+          <small
+            *ngIf="submitted && f['confirmarSenha'].errors?.['required']"
+            class="p-error block mt-1"
+            >Confirmação de senha é obrigatória.</small
+          >
+          <small
+            *ngIf="submitted && !f['confirmarSenha'].errors?.['required'] && registroForm.hasError('mismatch')"
+            class="p-error block mt-1"
+            >As senhas não coincidem.</small
+          >
+        </div>
+
+        <div class="field mt-3">
+          <label for="perfil" class="block text-900 text-xl font-medium mb-2"
+            >Eu sou</label
+          >
+          <p-dropdown
+            id="perfil"
+            [options]="perfis"
+            formControlName="perfil"
+            placeholder="Selecione seu perfil"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="w-full"
+            [ngClass]="{
+              'ng-invalid ng-dirty': submitted && f['perfil'].errors
+            }"
+          ></p-dropdown>
+          <small
+            *ngIf="submitted && f['perfil'].errors?.['required']"
+            class="p-error block mt-1"
+            >Perfil é obrigatório.</small
+          >
+        </div>
+
+        <div class="field mt-3">
+          <label for="telefone" class="block text-900 text-xl font-medium mb-2"
+            >Telefone (Opcional)</label
+          >
+          <input
+            pInputText
+            id="telefone"
+            formControlName="telefone"
+            type="text"
+            class="w-full"
+          />
+          <small
+            *ngIf="submitted && f['telefone'].errors?.['maxlength']"
+            class="p-error block mt-1"
+            >Telefone deve ter no máximo 20 caracteres.</small
+          >
+        </div>
+
+        <p-button
+          label="Criar Conta"
+          icon="pi pi-user-plus"
+          type="submit"
+          styleClass="w-full text-xl mt-4"
+          [loading]="isLoading"
+        ></p-button>
+
+        <div class="mt-4 text-center">
+          <span class="text-600 font-medium">Já tem uma conta?</span>
+          <a
+            [routerLink]="['/auth/login']"
+            class="font-medium no-underline text-blue-500 ml-1 cursor-pointer"
+            >Faça Login</a
+          >
+        </div>
+      </div>
+    </form>
+  </p-card>
+</div>

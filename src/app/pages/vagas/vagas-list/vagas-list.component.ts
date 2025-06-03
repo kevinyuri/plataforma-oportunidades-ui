@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core'; // Adicionado OnDestroy
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -8,6 +8,7 @@ import {
 } from '@angular/forms';
 import { InscricoesService } from '../../../services/inscricoes.service';
 import { Vaga } from '../../../models/vaga.model';
+import { Subscription } from 'rxjs'; // Importar Subscription
 
 // Importações do PrimeNG
 import { CardModule } from 'primeng/card';
@@ -17,11 +18,14 @@ import { MessageModule } from 'primeng/message';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
-import { DropdownModule } from 'primeng/dropdown'; // Para TipoContrato, se aplicável
+import { DropdownModule } from 'primeng/dropdown';
 import { ToastModule } from 'primeng/toast';
-import { TextareaModule } from 'primeng/textarea';
 import { MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog'; // Para confirmação de exclusão
+import { ConfirmationService } from 'primeng/api'; // Para confirmação de exclusão
+import { TextareaModule } from 'primeng/textarea';
 import { VagasService } from '../../../services/vaga.service';
+import { AuthService } from '../../../auth/auth.service';
 
 @Component({
   selector: 'app-vagas-list',
@@ -35,37 +39,42 @@ import { VagasService } from '../../../services/vaga.service';
     MessageModule,
     TagModule,
     DialogModule,
+    InputTextModule,
     TextareaModule,
-    InputTextModule, // Adicionar
-    DropdownModule, // Adicionar
+    DropdownModule,
     ToastModule,
+    ConfirmDialogModule,
   ],
   templateUrl: './vagas-list.component.html',
   styleUrls: ['./vagas-list.component.scss'],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
 })
-export class VagasListComponent implements OnInit {
+export class VagasListComponent implements OnInit, OnDestroy {
   vagas: Vaga[] = [];
   isLoading: boolean = true;
   errorMessage: string | null = null;
 
-  // Para o modal de Inscrição
-  displayInscricaoModal: boolean = false;
-  inscricaoForm!: FormGroup;
-  selectedVagaId: string | null = null;
-  isSubmittingInscricao: boolean = false;
+  // Propriedades do modal de inscrição foram removidas
 
-  // Para o modal de Criar Vaga
   displayCriarVagaModal: boolean = false;
   criarVagaForm!: FormGroup;
   isSubmittingCriarVaga: boolean = false;
   tiposContrato: any[];
 
+  currentUser: any = null;
+  private userSubscription!: Subscription;
+
+  isEditModeVaga: boolean = false;
+  vagaParaEditarId: string | null = null;
+  isSubmittingInscricaoVaga: boolean = false; // Para o loading do botão de inscrição direta
+
   constructor(
     private vagasService: VagasService,
     private inscricoesService: InscricoesService,
+    private authService: AuthService,
     private fb: FormBuilder,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private confirmationService: ConfirmationService
   ) {
     this.tiposContrato = [
       { label: 'CLT', value: 'CLT' },
@@ -78,13 +87,14 @@ export class VagasListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.carregarVagas();
-
-    this.inscricaoForm = this.fb.group({
-      usuarioId: ['', [Validators.required, Validators.minLength(3)]],
+    this.userSubscription = this.authService.currentUser.subscribe((user) => {
+      this.currentUser = user;
     });
 
-    // Inicializar o formulário de Criar Vaga
+    this.carregarVagas();
+
+    // Formulário de inscrição foi removido, pois a inscrição será direta
+
     this.criarVagaForm = this.fb.group({
       titulo: [
         '',
@@ -99,6 +109,25 @@ export class VagasListComponent implements OnInit {
       local: ['', [Validators.maxLength(100)]],
       tipoContrato: [null],
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.userSubscription) {
+      this.userSubscription.unsubscribe();
+    }
+  }
+
+  get canManageVagas(): boolean {
+    return (
+      this.currentUser &&
+      (this.currentUser.perfil === 'empresa' ||
+        this.currentUser.perfil === 'admin')
+    );
+  }
+
+  // Verifica se o utilizador atual pode se inscrever em vagas (ex: não é empresa)
+  get canInscribeInVagas(): boolean {
+    return this.currentUser && this.currentUser.perfil !== 'empresa';
   }
 
   carregarVagas(): void {
@@ -117,67 +146,87 @@ export class VagasListComponent implements OnInit {
     });
   }
 
-  // --- Lógica para Modal de Inscrição ---
-  abrirModalInscricao(vagaId: string): void {
-    this.selectedVagaId = vagaId;
-    this.inscricaoForm.reset();
-    this.displayInscricaoModal = true;
-  }
+  // Lógica para Modal de Inscrição REMOVIDA (abrirModalInscricao, fecharModalInscricao, onSubmitInscricao)
 
-  fecharModalInscricao(): void {
-    this.displayInscricaoModal = false;
-    this.selectedVagaId = null;
-    this.isSubmittingInscricao = false;
-  }
-
-  onSubmitInscricao(): void {
-    if (this.inscricaoForm.invalid || !this.selectedVagaId) {
+  // Nova lógica para Inscrição Direta
+  realizarInscricao(vagaId: string): void {
+    if (!this.currentUser || !this.currentUser.id) {
       this.messageService.add({
         severity: 'warn',
         summary: 'Atenção',
-        detail: 'Por favor, preencha o ID do Usuário.',
+        detail: 'Você precisa estar logado para se inscrever.',
       });
-      Object.values(this.inscricaoForm.controls).forEach((control) =>
-        control.markAsTouched()
-      );
+      // Opcional: redirecionar para o login
+      // this.router.navigate(['/auth/login']);
       return;
     }
-    this.isSubmittingInscricao = true;
+
+    if (!this.canInscribeInVagas) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Ação não permitida',
+        detail:
+          'Utilizadores com perfil de empresa não podem se inscrever em vagas.',
+      });
+      return;
+    }
+
+    this.isSubmittingInscricaoVaga = true; // Ativa o loading do botão específico (se tiver um)
+
     const dadosInscricao = {
-      usuarioId: this.inscricaoForm.value.usuarioId,
-      vagaId: this.selectedVagaId,
-      cursoId: null,
-      status: 'Pendente',
+      usuarioId: this.currentUser.id,
+      vagaId: vagaId,
+      cursoId: null, // Inscrição é para uma vaga
+      status: 'Pendente', // Status padrão
     };
+
     this.inscricoesService.criarInscricao(dadosInscricao).subscribe({
       next: () => {
         this.messageService.add({
           severity: 'success',
           summary: 'Sucesso',
-          detail: 'Inscrição realizada com sucesso!',
+          detail: 'Inscrição na vaga realizada com sucesso!',
         });
-        this.fecharModalInscricao();
+        this.isSubmittingInscricaoVaga = false;
+        // Opcional: atualizar estado da vaga para indicar que o utilizador está inscrito,
+        // ou desabilitar o botão de inscrição para esta vaga.
       },
       error: (err) => {
         this.messageService.add({
           severity: 'error',
-          summary: 'Erro',
-          detail: err.message || 'Não foi possível realizar a inscrição.',
+          summary: 'Erro na Inscrição',
+          detail:
+            err.message || 'Não foi possível realizar a inscrição na vaga.',
         });
-        this.isSubmittingInscricao = false;
+        this.isSubmittingInscricaoVaga = false;
       },
     });
   }
 
-  // --- Lógica para Modal de Criar Vaga ---
-  abrirModalCriarVaga(): void {
+  abrirModalCriarVaga(vaga?: Vaga): void {
+    this.isEditModeVaga = !!vaga;
     this.criarVagaForm.reset();
+
+    if (this.isEditModeVaga && vaga) {
+      this.vagaParaEditarId = vaga.id;
+      this.criarVagaForm.patchValue({
+        titulo: vaga.titulo,
+        descricao: vaga.descricao,
+        empresa: vaga.empresa,
+        local: vaga.local,
+        tipoContrato: vaga.tipoContrato,
+      });
+    } else {
+      this.vagaParaEditarId = null;
+    }
     this.displayCriarVagaModal = true;
   }
 
   fecharModalCriarVaga(): void {
     this.displayCriarVagaModal = false;
     this.isSubmittingCriarVaga = false;
+    this.isEditModeVaga = false;
+    this.vagaParaEditarId = null;
   }
 
   onSubmitCriarVaga(): void {
@@ -194,25 +243,90 @@ export class VagasListComponent implements OnInit {
       return;
     }
     this.isSubmittingCriarVaga = true;
-    const novaVagaData = this.criarVagaForm.value;
+    const vagaData = this.criarVagaForm.value;
 
-    this.vagasService.criarVaga(novaVagaData).subscribe({
-      next: (vagaCriada) => {
+    if (this.isEditModeVaga && this.vagaParaEditarId) {
+      this.vagasService
+        .atualizarVaga(this.vagaParaEditarId, vagaData)
+        .subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Sucesso',
+              detail: 'Vaga atualizada com sucesso!',
+            });
+            this.fecharModalCriarVaga();
+            this.carregarVagas();
+          },
+          error: (err) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erro',
+              detail: err.message || 'Não foi possível atualizar a vaga.',
+            });
+            this.isSubmittingCriarVaga = false;
+          },
+        });
+    } else {
+      this.vagasService.criarVaga(vagaData).subscribe({
+        next: (vagaCriada) => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Sucesso',
+            detail: `Vaga "${vagaCriada.titulo}" criada com sucesso!`,
+          });
+          this.fecharModalCriarVaga();
+          this.carregarVagas();
+        },
+        error: (err) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erro',
+            detail: err.message || 'Não foi possível criar a vaga.',
+          });
+          this.isSubmittingCriarVaga = false;
+        },
+      });
+    }
+  }
+
+  confirmarDelecaoVaga(vagaId: string): void {
+    if (!this.canManageVagas) return;
+
+    this.confirmationService.confirm({
+      message:
+        'Tem certeza que deseja excluir esta vaga? Esta ação não pode ser desfeita.',
+      header: 'Confirmar Exclusão',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sim, excluir',
+      rejectLabel: 'Cancelar',
+      accept: () => {
+        this.deletarVaga(vagaId);
+      },
+      // reject: () => { // Opcional: mensagem se cancelar
+      //     this.messageService.add({ severity: 'info', summary: 'Cancelado', detail: 'A exclusão da vaga foi cancelada.' });
+      // }
+    });
+  }
+
+  private deletarVaga(vagaId: string): void {
+    this.isLoading = true;
+    this.vagasService.deletarVaga(vagaId).subscribe({
+      next: () => {
         this.messageService.add({
           severity: 'success',
           summary: 'Sucesso',
-          detail: `Vaga "${vagaCriada.titulo}" criada com sucesso!`,
+          detail: 'Vaga excluída com sucesso!',
         });
-        this.fecharModalCriarVaga();
         this.carregarVagas();
       },
       error: (err) => {
         this.messageService.add({
           severity: 'error',
-          summary: 'Erro',
-          detail: err.message || 'Não foi possível criar a vaga.',
+          summary: 'Erro ao Excluir',
+          detail: err.message || 'Não foi possível excluir a vaga.',
         });
-        this.isSubmittingCriarVaga = false;
+        this.isLoading = false;
       },
     });
   }
@@ -235,9 +349,7 @@ export class VagasListComponent implements OnInit {
     }
   }
 
-  get fInscricao() {
-    return this.inscricaoForm.controls;
-  }
+  // fInscricao getter removido
   get fCriarVaga() {
     return this.criarVagaForm.controls;
   }
