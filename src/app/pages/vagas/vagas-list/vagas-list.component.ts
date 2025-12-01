@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core'; // Adicionado OnDestroy
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -8,7 +8,7 @@ import {
 } from '@angular/forms';
 import { InscricoesService } from '../../../services/inscricoes.service';
 import { Vaga } from '../../../models/vaga.model';
-import { Subscription } from 'rxjs'; // Importar Subscription
+import { Subscription } from 'rxjs';
 
 // Importações do PrimeNG
 import { CardModule } from 'primeng/card';
@@ -21,9 +21,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { DropdownModule } from 'primeng/dropdown';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog'; // Para confirmação de exclusão
-import { ConfirmationService } from 'primeng/api'; // Para confirmação de exclusão
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 import { TextareaModule } from 'primeng/textarea';
+import { CheckboxModule } from 'primeng/checkbox'; // IMPORTANTE: Módulo adicionado
+import { TooltipModule } from 'primeng/tooltip'; // Adicionado para os tooltips
 import { VagasService } from '../../../services/vaga.service';
 import { AuthService } from '../../../auth/auth.service';
 
@@ -44,6 +46,8 @@ import { AuthService } from '../../../auth/auth.service';
     DropdownModule,
     ToastModule,
     ConfirmDialogModule,
+    CheckboxModule, // Adicionado
+    TooltipModule   // Adicionado
   ],
   templateUrl: './vagas-list.component.html',
   styleUrls: ['./vagas-list.component.scss'],
@@ -54,19 +58,19 @@ export class VagasListComponent implements OnInit, OnDestroy {
   isLoading: boolean = true;
   errorMessage: string | null = null;
 
-  // Propriedades do modal de inscrição foram removidas
-
   displayCriarVagaModal: boolean = false;
   criarVagaForm!: FormGroup;
   isSubmittingCriarVaga: boolean = false;
+
   tiposContrato: any[];
+  zonasDaCidade: string[]; // Lista para o Dropdown
 
   currentUser: any = null;
   private userSubscription!: Subscription;
 
   isEditModeVaga: boolean = false;
   vagaParaEditarId: string | null = null;
-  isSubmittingInscricaoVaga: boolean = false; // Para o loading do botão de inscrição direta
+  isSubmittingInscricaoVaga: boolean = false;
 
   constructor(
     private vagasService: VagasService,
@@ -82,7 +86,12 @@ export class VagasListComponent implements OnInit, OnDestroy {
       { label: 'Estágio', value: 'Estágio' },
       { label: 'Temporário', value: 'Temporário' },
       { label: 'Freelance', value: 'Freelance' },
-      { label: 'Outro', value: 'Outro' },
+      { label: 'Voluntariado', value: 'Voluntariado' }, // Bom para ODS
+    ];
+
+    // Zonas da cidade para facilitar o filtro
+    this.zonasDaCidade = [
+        'Zona Norte', 'Zona Sul', 'Zona Leste', 'Zona Oeste', 'Centro', 'Região Metropolitana'
     ];
   }
 
@@ -93,20 +102,19 @@ export class VagasListComponent implements OnInit, OnDestroy {
 
     this.carregarVagas();
 
-    // Formulário de inscrição foi removido, pois a inscrição será direta
-
+    // Inicializa o formulário com os novos campos ODS 11
     this.criarVagaForm = this.fb.group({
-      titulo: [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(5),
-          Validators.maxLength(150),
-        ],
-      ],
+      titulo: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(150)]],
       descricao: ['', [Validators.required, Validators.minLength(10)]],
       empresa: ['', [Validators.maxLength(100)]],
-      local: ['', [Validators.maxLength(100)]],
+
+      // Novos campos
+      bairro: ['', [Validators.maxLength(100)]], // Importante para localidade
+      zonaDaCidade: [null],
+      local: ['Fortaleza', [Validators.maxLength(100)]], // Default
+      ehVagaVerde: [false], // Checkbox
+      aceitaRemoto: [false], // Checkbox
+
       tipoContrato: [null],
     });
   }
@@ -120,12 +128,10 @@ export class VagasListComponent implements OnInit, OnDestroy {
   get canManageVagas(): boolean {
     return (
       this.currentUser &&
-      (this.currentUser.perfil === 'empresa' ||
-        this.currentUser.perfil === 'admin')
+      (this.currentUser.perfil === 'empresa' || this.currentUser.perfil === 'admin')
     );
   }
 
-  // Verifica se o utilizador atual pode se inscrever em vagas (ex: não é empresa)
   get canInscribeInVagas(): boolean {
     return this.currentUser && this.currentUser.perfil !== 'empresa';
   }
@@ -139,16 +145,12 @@ export class VagasListComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       },
       error: (err) => {
-        this.errorMessage =
-          err.message || 'Não foi possível carregar as vagas.';
+        this.errorMessage = err.message || 'Não foi possível carregar as vagas.';
         this.isLoading = false;
       },
     });
   }
 
-  // Lógica para Modal de Inscrição REMOVIDA (abrirModalInscricao, fecharModalInscricao, onSubmitInscricao)
-
-  // Nova lógica para Inscrição Direta
   realizarInscricao(vagaId: string): void {
     if (!this.currentUser || !this.currentUser.id) {
       this.messageService.add({
@@ -156,8 +158,6 @@ export class VagasListComponent implements OnInit, OnDestroy {
         summary: 'Atenção',
         detail: 'Você precisa estar logado para se inscrever.',
       });
-      // Opcional: redirecionar para o login
-      // this.router.navigate(['/auth/login']);
       return;
     }
 
@@ -165,38 +165,34 @@ export class VagasListComponent implements OnInit, OnDestroy {
       this.messageService.add({
         severity: 'warn',
         summary: 'Ação não permitida',
-        detail:
-          'Utilizadores com perfil de empresa não podem se inscrever em vagas.',
+        detail: 'Utilizadores com perfil de empresa não podem se inscrever em vagas.',
       });
       return;
     }
 
-    this.isSubmittingInscricaoVaga = true; // Ativa o loading do botão específico (se tiver um)
+    this.isSubmittingInscricaoVaga = true;
 
     const dadosInscricao = {
       usuarioId: this.currentUser.id,
       vagaId: vagaId,
-      cursoId: null, // Inscrição é para uma vaga
-      status: 'Pendente', // Status padrão
+      cursoId: null,
+      status: 'Pendente',
     };
 
     this.inscricoesService.criarInscricao(dadosInscricao).subscribe({
       next: () => {
         this.messageService.add({
           severity: 'success',
-          summary: 'Sucesso',
-          detail: 'Inscrição na vaga realizada com sucesso!',
+          summary: 'Inscrição Realizada!',
+          detail: 'Boa sorte! A empresa analisará seu perfil.',
         });
         this.isSubmittingInscricaoVaga = false;
-        // Opcional: atualizar estado da vaga para indicar que o utilizador está inscrito,
-        // ou desabilitar o botão de inscrição para esta vaga.
       },
       error: (err) => {
         this.messageService.add({
           severity: 'error',
           summary: 'Erro na Inscrição',
-          detail:
-            err.message || 'Não foi possível realizar a inscrição na vaga.',
+          detail: err.message || 'Não foi possível realizar a inscrição.',
         });
         this.isSubmittingInscricaoVaga = false;
       },
@@ -205,16 +201,26 @@ export class VagasListComponent implements OnInit, OnDestroy {
 
   abrirModalCriarVaga(vaga?: Vaga): void {
     this.isEditModeVaga = !!vaga;
-    this.criarVagaForm.reset();
+    this.criarVagaForm.reset({
+        local: 'Fortaleza',
+        ehVagaVerde: false,
+        aceitaRemoto: false
+    });
 
     if (this.isEditModeVaga && vaga) {
       this.vagaParaEditarId = vaga.id;
+      // Popula o formulário com dados existentes (incluindo os novos)
       this.criarVagaForm.patchValue({
         titulo: vaga.titulo,
         descricao: vaga.descricao,
         empresa: vaga.empresa,
         local: vaga.local,
         tipoContrato: vaga.tipoContrato,
+        // Novos campos (Se existirem no objeto vaga)
+        bairro: (vaga as any).bairro,
+        zonaDaCidade: (vaga as any).zonaDaCidade,
+        ehVagaVerde: (vaga as any).ehVagaVerde,
+        aceitaRemoto: (vaga as any).aceitaRemoto
       });
     } else {
       this.vagaParaEditarId = null;
@@ -234,8 +240,7 @@ export class VagasListComponent implements OnInit, OnDestroy {
       this.messageService.add({
         severity: 'warn',
         summary: 'Atenção',
-        detail:
-          'Por favor, preencha todos os campos obrigatórios corretamente.',
+        detail: 'Preencha os campos obrigatórios.',
       });
       Object.values(this.criarVagaForm.controls).forEach((control) =>
         control.markAsTouched()
@@ -252,18 +257,14 @@ export class VagasListComponent implements OnInit, OnDestroy {
           next: () => {
             this.messageService.add({
               severity: 'success',
-              summary: 'Sucesso',
+              summary: 'Atualizado',
               detail: 'Vaga atualizada com sucesso!',
             });
             this.fecharModalCriarVaga();
             this.carregarVagas();
           },
           error: (err) => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Erro',
-              detail: err.message || 'Não foi possível atualizar a vaga.',
-            });
+            this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao atualizar.' });
             this.isSubmittingCriarVaga = false;
           },
         });
@@ -272,18 +273,14 @@ export class VagasListComponent implements OnInit, OnDestroy {
         next: (vagaCriada) => {
           this.messageService.add({
             severity: 'success',
-            summary: 'Sucesso',
-            detail: `Vaga "${vagaCriada.titulo}" criada com sucesso!`,
+            summary: 'Publicada',
+            detail: 'Nova oportunidade criada!',
           });
           this.fecharModalCriarVaga();
           this.carregarVagas();
         },
         error: (err) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erro',
-            detail: err.message || 'Não foi possível criar a vaga.',
-          });
+          this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Erro ao criar vaga.' });
           this.isSubmittingCriarVaga = false;
         },
       });
@@ -294,18 +291,15 @@ export class VagasListComponent implements OnInit, OnDestroy {
     if (!this.canManageVagas) return;
 
     this.confirmationService.confirm({
-      message:
-        'Tem certeza que deseja excluir esta vaga? Esta ação não pode ser desfeita.',
+      message: 'Tem certeza que deseja excluir esta vaga? A ação é irreversível.',
       header: 'Confirmar Exclusão',
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Sim, excluir',
+      acceptLabel: 'Excluir',
       rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
         this.deletarVaga(vagaId);
       },
-      // reject: () => { // Opcional: mensagem se cancelar
-      //     this.messageService.add({ severity: 'info', summary: 'Cancelado', detail: 'A exclusão da vaga foi cancelada.' });
-      // }
     });
   }
 
@@ -313,19 +307,11 @@ export class VagasListComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.vagasService.deletarVaga(vagaId).subscribe({
       next: () => {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Sucesso',
-          detail: 'Vaga excluída com sucesso!',
-        });
+        this.messageService.add({ severity: 'success', summary: 'Sucesso', detail: 'Vaga removida.' });
         this.carregarVagas();
       },
       error: (err) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erro ao Excluir',
-          detail: err.message || 'Não foi possível excluir a vaga.',
-        });
+        this.messageService.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível excluir.' });
         this.isLoading = false;
       },
     });
@@ -333,23 +319,13 @@ export class VagasListComponent implements OnInit, OnDestroy {
 
   getSeverityForTipoContrato(tipoContrato?: string): string {
     if (!tipoContrato) return 'info';
-    switch (tipoContrato.toLowerCase()) {
-      case 'clt':
-      case 'efetivo':
-        return 'success';
-      case 'pj':
-      case 'pessoa jurídica':
-        return 'warning';
-      case 'estágio':
-        return 'info';
-      case 'temporário':
-        return 'primary';
-      default:
-        return 'secondary';
-    }
+    const tipo = tipoContrato.toLowerCase();
+    if (tipo.includes('clt') || tipo.includes('efetivo')) return 'success';
+    if (tipo.includes('pj')) return 'warning';
+    if (tipo.includes('estágio')) return 'info';
+    return 'primary';
   }
 
-  // fInscricao getter removido
   get fCriarVaga() {
     return this.criarVagaForm.controls;
   }

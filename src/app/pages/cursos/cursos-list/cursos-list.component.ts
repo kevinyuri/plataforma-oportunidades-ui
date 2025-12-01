@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core'; // Adicionado OnDestroy
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -8,7 +8,7 @@ import {
 } from '@angular/forms';
 import { InscricoesService } from '../../../services/inscricoes.service';
 import { Curso } from '../../../models/curso.model';
-import { Subscription } from 'rxjs'; // Importar Subscription
+import { Subscription } from 'rxjs';
 
 // Importações do PrimeNG
 import { CardModule } from 'primeng/card';
@@ -22,9 +22,11 @@ import { DropdownModule } from 'primeng/dropdown';
 import { CalendarModule } from 'primeng/calendar';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog'; // Para confirmação de exclusão
-import { ConfirmationService } from 'primeng/api'; // Para confirmação de exclusão
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 import { TextareaModule } from 'primeng/textarea';
+import { CheckboxModule } from 'primeng/checkbox'; // IMPORTANTE: Adicionado
+import { TooltipModule } from 'primeng/tooltip'; // IMPORTANTE: Adicionado
 import { CursosService } from '../../../services/curso.service';
 import { AuthService } from '../../../auth/auth.service';
 
@@ -45,19 +47,18 @@ import { AuthService } from '../../../auth/auth.service';
     DropdownModule,
     CalendarModule,
     ToastModule,
-    ConfirmDialogModule, // Adicionar
+    ConfirmDialogModule,
+    CheckboxModule, // Adicionado
+    TooltipModule, // Adicionado
   ],
   templateUrl: './cursos-list.component.html',
   styleUrls: ['./cursos-list.component.scss'],
-  providers: [MessageService, ConfirmationService], // Adicionar ConfirmationService
+  providers: [MessageService, ConfirmationService],
 })
 export class CursosListComponent implements OnInit, OnDestroy {
-  // Implementar OnDestroy
   cursos: Curso[] = [];
   isLoading: boolean = true;
   errorMessage: string | null = null;
-
-  // Propriedades do modal de inscrição em curso foram removidas
 
   displayCriarCursoModal: boolean = false;
   criarCursoForm!: FormGroup;
@@ -69,21 +70,21 @@ export class CursosListComponent implements OnInit, OnDestroy {
 
   isEditModeCurso: boolean = false;
   cursoParaEditarId: string | null = null;
-  isSubmittingInscricaoCurso: boolean = false; // Para o loading do botão de inscrição direta
+  isSubmittingInscricaoCurso: boolean = false;
 
   constructor(
     private cursosService: CursosService,
     private inscricoesService: InscricoesService,
-    private authService: AuthService, // Injetar AuthService
+    private authService: AuthService,
     private fb: FormBuilder,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService // Injetar ConfirmationService
+    private confirmationService: ConfirmationService
   ) {
     this.modalidadesCurso = [
       { label: 'Online', value: 'Online' },
       { label: 'Presencial', value: 'Presencial' },
       { label: 'Híbrido', value: 'Híbrido' },
-      { label: 'Outro', value: 'Outro' },
+      { label: 'Oficina Prática', value: 'Oficina' }, // Bom para ODS 11
     ];
   }
 
@@ -93,8 +94,6 @@ export class CursosListComponent implements OnInit, OnDestroy {
     });
 
     this.carregarCursos();
-
-    // Formulário de inscrição em curso foi removido
 
     this.criarCursoForm = this.fb.group({
       nome: [
@@ -109,6 +108,11 @@ export class CursosListComponent implements OnInit, OnDestroy {
       cargaHoraria: ['', [Validators.maxLength(50)]],
       modalidade: [null],
       dataInicio: [null, Validators.required],
+
+      // --- NOVOS CAMPOS ODS 11 ---
+      focadoEmSustentabilidade: [false], // Checkbox
+      impactoComunitario: ['', [Validators.maxLength(200)]], // Descrição curta
+      // ---------------------------
     });
   }
 
@@ -118,8 +122,6 @@ export class CursosListComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Getter para verificar se o utilizador pode gerir cursos (criar, editar, deletar)
-  // Ajuste os perfis conforme necessário (ex: apenas 'admin')
   get canManageCursos(): boolean {
     return (
       this.currentUser &&
@@ -128,10 +130,8 @@ export class CursosListComponent implements OnInit, OnDestroy {
     );
   }
 
-  // Verifica se o utilizador atual pode se inscrever em cursos
   get canInscribeInCursos(): boolean {
-    // Exemplo: todos os utilizadores logados podem se inscrever, exceto se houver outra regra
-    return !!this.currentUser; // Ou uma lógica mais específica, ex: this.currentUser.perfil === 'candidato'
+    return !!this.currentUser;
   }
 
   carregarCursos(): void {
@@ -150,9 +150,6 @@ export class CursosListComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Lógica para Modal de Inscrição REMOVIDA
-
-  // Nova lógica para Inscrição Direta em Curso
   realizarInscricaoCurso(cursoId: string): void {
     if (!this.currentUser || !this.currentUser.id) {
       this.messageService.add({
@@ -163,39 +160,29 @@ export class CursosListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.canInscribeInCursos) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Ação não permitida',
-        detail: 'Seu perfil não permite inscrição em cursos.',
-      });
-      return;
-    }
-
     this.isSubmittingInscricaoCurso = true;
 
     const dadosInscricao = {
       usuarioId: this.currentUser.id,
-      vagaId: null, // Inscrição é para um curso
+      vagaId: null,
       cursoId: cursoId,
-      status: 'Inscrito', // Status padrão
+      status: 'Inscrito',
     };
 
     this.inscricoesService.criarInscricao(dadosInscricao).subscribe({
       next: () => {
         this.messageService.add({
           severity: 'success',
-          summary: 'Sucesso',
-          detail: 'Inscrição no curso realizada com sucesso!',
+          summary: 'Inscrito!',
+          detail: 'Você garantiu sua vaga no curso.',
         });
         this.isSubmittingInscricaoCurso = false;
       },
       error: (err) => {
         this.messageService.add({
           severity: 'error',
-          summary: 'Erro na Inscrição',
-          detail:
-            err.message || 'Não foi possível realizar a inscrição no curso.',
+          summary: 'Erro',
+          detail: err.message || 'Erro na inscrição.',
         });
         this.isSubmittingInscricaoCurso = false;
       },
@@ -204,7 +191,9 @@ export class CursosListComponent implements OnInit, OnDestroy {
 
   abrirModalCriarCurso(curso?: Curso): void {
     this.isEditModeCurso = !!curso;
-    this.criarCursoForm.reset();
+    this.criarCursoForm.reset({
+      focadoEmSustentabilidade: false,
+    });
 
     if (this.isEditModeCurso && curso) {
       this.cursoParaEditarId = curso.id;
@@ -213,7 +202,11 @@ export class CursosListComponent implements OnInit, OnDestroy {
         instituicao: curso.instituicao,
         cargaHoraria: curso.cargaHoraria,
         modalidade: curso.modalidade,
-        dataInicio: curso.dataInicio ? new Date(curso.dataInicio) : null, // Converter para objeto Date se necessário
+        dataInicio: curso.dataInicio ? new Date(curso.dataInicio) : null,
+
+        // Novos campos (cast any se a interface ainda não tiver atualizado no front)
+        focadoEmSustentabilidade: (curso as any).focadoEmSustentabilidade,
+        impactoComunitario: (curso as any).impactoComunitario,
       });
     } else {
       this.cursoParaEditarId = null;
@@ -233,8 +226,7 @@ export class CursosListComponent implements OnInit, OnDestroy {
       this.messageService.add({
         severity: 'warn',
         summary: 'Atenção',
-        detail:
-          'Por favor, preencha todos os campos obrigatórios corretamente.',
+        detail: 'Preencha os campos obrigatórios.',
       });
       Object.values(this.criarCursoForm.controls).forEach((control) =>
         control.markAsTouched()
@@ -245,14 +237,13 @@ export class CursosListComponent implements OnInit, OnDestroy {
     const cursoData = this.criarCursoForm.value;
 
     if (this.isEditModeCurso && this.cursoParaEditarId) {
-      // Lógica de Atualização
       this.cursosService
         .atualizarCurso(this.cursoParaEditarId, cursoData)
         .subscribe({
           next: () => {
             this.messageService.add({
               severity: 'success',
-              summary: 'Sucesso',
+              summary: 'Atualizado',
               detail: 'Curso atualizado com sucesso!',
             });
             this.fecharModalCriarCurso();
@@ -262,19 +253,18 @@ export class CursosListComponent implements OnInit, OnDestroy {
             this.messageService.add({
               severity: 'error',
               summary: 'Erro',
-              detail: err.message || 'Não foi possível atualizar o curso.',
+              detail: 'Erro ao atualizar.',
             });
             this.isSubmittingCriarCurso = false;
           },
         });
     } else {
-      // Lógica de Criação
       this.cursosService.criarCurso(cursoData).subscribe({
         next: (cursoCriado) => {
           this.messageService.add({
             severity: 'success',
-            summary: 'Sucesso',
-            detail: `Curso "${cursoCriado.nome}" criado com sucesso!`,
+            summary: 'Criado',
+            detail: `Curso criado com sucesso!`,
           });
           this.fecharModalCriarCurso();
           this.carregarCursos();
@@ -283,7 +273,7 @@ export class CursosListComponent implements OnInit, OnDestroy {
           this.messageService.add({
             severity: 'error',
             summary: 'Erro',
-            detail: err.message || 'Não foi possível criar o curso.',
+            detail: 'Erro ao criar curso.',
           });
           this.isSubmittingCriarCurso = false;
         },
@@ -295,12 +285,12 @@ export class CursosListComponent implements OnInit, OnDestroy {
     if (!this.canManageCursos) return;
 
     this.confirmationService.confirm({
-      message:
-        'Tem certeza que deseja excluir este curso? Esta ação não pode ser desfeita.',
+      message: 'Tem certeza que deseja excluir este curso?',
       header: 'Confirmar Exclusão',
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Sim, excluir',
+      acceptLabel: 'Excluir',
       rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
         this.deletarCurso(cursoId);
       },
@@ -314,15 +304,15 @@ export class CursosListComponent implements OnInit, OnDestroy {
         this.messageService.add({
           severity: 'success',
           summary: 'Sucesso',
-          detail: 'Curso excluído com sucesso!',
+          detail: 'Curso removido.',
         });
         this.carregarCursos();
       },
       error: (err) => {
         this.messageService.add({
           severity: 'error',
-          summary: 'Erro ao Excluir',
-          detail: err.message || 'Não foi possível excluir o curso.',
+          summary: 'Erro',
+          detail: 'Erro ao excluir.',
         });
         this.isLoading = false;
       },
@@ -331,19 +321,13 @@ export class CursosListComponent implements OnInit, OnDestroy {
 
   getSeverityForModalidade(modalidade?: string): string {
     if (!modalidade) return 'info';
-    switch (modalidade.toLowerCase()) {
-      case 'online':
-        return 'success';
-      case 'presencial':
-        return 'info';
-      case 'híbrido':
-        return 'warning';
-      default:
-        return 'secondary';
-    }
+    const mod = modalidade.toLowerCase();
+    if (mod === 'online') return 'success';
+    if (mod === 'híbrido') return 'warning';
+    if (mod === 'presencial' || mod === 'oficina') return 'info';
+    return 'secondary';
   }
 
-  // fInscricaoCurso getter removido
   get fCriarCurso() {
     return this.criarCursoForm.controls;
   }

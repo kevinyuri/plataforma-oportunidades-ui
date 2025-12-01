@@ -9,7 +9,7 @@ import {
   ReactiveFormsModule,
   FormsModule,
 } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router'; // RouterModule para routerLink
+import { Router, RouterModule } from '@angular/router';
 import { MessageService } from 'primeng/api';
 
 // Importações do PrimeNG
@@ -18,7 +18,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
-import { ToastModule } from 'primeng/toast'; // Para notificações
+import { ToastModule } from 'primeng/toast';
 import { UsuarioService } from '../../services/usuario.service';
 
 @Component({
@@ -27,8 +27,8 @@ import { UsuarioService } from '../../services/usuario.service';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    FormsModule, // Adicionado para p-password [(ngModel)] se usado com feedback complexo, mas tentaremos com formControlName
-    RouterModule, // Adicionar para routerLink
+    FormsModule,
+    RouterModule,
     CardModule,
     InputTextModule,
     PasswordModule,
@@ -38,13 +38,13 @@ import { UsuarioService } from '../../services/usuario.service';
   ],
   templateUrl: './registro.component.html',
   styleUrls: ['./registro.component.scss'],
-  providers: [MessageService], // Fornecer MessageService aqui ou globalmente
+  providers: [MessageService],
 })
 export class RegistroComponent implements OnInit {
   registroForm!: FormGroup;
   submitted = false;
-  isLoading = false; // Para feedback no botão de registo
-  perfis: any[]; // Para o dropdown de perfis
+  isLoading = false;
+  perfis: any[];
 
   constructor(
     private fb: FormBuilder,
@@ -55,7 +55,6 @@ export class RegistroComponent implements OnInit {
     this.perfis = [
       { label: 'Candidato', value: 'candidato' },
       { label: 'Empresa', value: 'empresa' },
-      // Não incluir 'admin' aqui, pois o registo de admin deve ser um processo separado
     ];
   }
 
@@ -74,36 +73,42 @@ export class RegistroComponent implements OnInit {
           '',
           [Validators.required, Validators.email, Validators.maxLength(100)],
         ],
+
+        // --- NOVO CAMPO ODS 11 ---
+        // Obrigatório para garantir o funcionamento da lógica de vagas locais
+        bairroResidencia: [
+          '',
+          [Validators.required, Validators.maxLength(100)],
+        ],
+        // -------------------------
+
         senha: [
           '',
           [
             Validators.required,
             Validators.minLength(6),
             Validators.maxLength(100),
-            // Validators.pattern(this.strongRegex) // Descomente para usar a validação de senha forte
           ],
         ],
         confirmarSenha: ['', Validators.required],
-        perfil: [null, Validators.required], // Perfil default ou deixar utilizador escolher
-        telefone: ['', [Validators.maxLength(20)]], // Opcional
+        perfil: [null, Validators.required],
+        telefone: ['', [Validators.maxLength(20)]],
       },
       { validators: this.passwordMatchValidator }
     );
   }
 
-  // Validador customizado para verificar se as senhas coincidem
   passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
     const senha = control.get('senha');
     const confirmarSenha = control.get('confirmarSenha');
 
     if (senha && confirmarSenha && senha.value !== confirmarSenha.value) {
-      confirmarSenha.setErrors({ mismatch: true }); // Define erro no campo confirmarSenha
-      return { mismatch: true }; // Retorna erro para o FormGroup
+      confirmarSenha.setErrors({ mismatch: true });
+      return { mismatch: true };
     } else if (confirmarSenha && confirmarSenha.hasError('mismatch')) {
-      // Se as senhas agora coincidem, mas o erro 'mismatch' ainda está lá, limpe-o.
       confirmarSenha.setErrors(null);
     }
-    return null; // Sem erro
+    return null;
   }
 
   get f() {
@@ -112,20 +117,19 @@ export class RegistroComponent implements OnInit {
 
   onSubmit(): void {
     this.submitted = true;
-    this.registroForm.markAllAsTouched(); // Garante que as mensagens de erro apareçam
+    this.registroForm.markAllAsTouched();
 
     if (this.registroForm.invalid) {
       this.messageService.add({
         severity: 'warn',
         summary: 'Atenção',
-        detail:
-          'Por favor, preencha todos os campos obrigatórios corretamente.',
+        detail: 'Por favor, preencha todos os campos obrigatórios.',
       });
       return;
     }
 
     this.isLoading = true;
-    // Remover confirmarSenha do objeto a ser enviado para o backend, pois não faz parte do UsuarioCreateDto
+    // Remove confirmarSenha antes de enviar
     const { confirmarSenha, ...dadosUsuarioParaApi } = this.registroForm.value;
 
     this.usuarioService.registrarUsuario(dadosUsuarioParaApi).subscribe({
@@ -133,23 +137,20 @@ export class RegistroComponent implements OnInit {
         this.isLoading = false;
         this.messageService.add({
           severity: 'success',
-          summary: 'Sucesso',
-          detail: 'Utilizador registado com sucesso! Por favor, faça login.',
+          summary: 'Bem-vindo!',
+          detail: 'Cadastro realizado com sucesso. Faça login para continuar.',
         });
-        // Adicionar um pequeno delay antes de redirecionar para o utilizador ver a mensagem
         setTimeout(() => {
-          this.router.navigate(['/auth/login']); // Redirecionar para a página de login
+          this.router.navigate(['/auth/login']);
         }, 2000);
       },
       error: (errorResponse) => {
         this.isLoading = false;
-        console.error('Erro no registo (componente):', errorResponse);
+        console.error('Erro no registo:', errorResponse);
         this.messageService.add({
           severity: 'error',
-          summary: 'Erro no Registo',
-          detail:
-            errorResponse.message ||
-            'Não foi possível registar o utilizador. Verifique os dados ou tente mais tarde.',
+          summary: 'Erro',
+          detail: errorResponse.error?.message || 'Erro ao registrar usuário.',
         });
       },
     });

@@ -4,5 +4,7 @@ export interface Curso {
   instituicao?: string;
   cargaHoraria?: string;
   modalidade?: string;
-  dataInicio: Date;
+  dataInicio: Date | string;
+  focadoEmSustentabilidade?: boolean;
+  impactoComunitario?: string;
 }

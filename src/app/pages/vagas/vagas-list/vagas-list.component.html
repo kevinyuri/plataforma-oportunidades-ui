@@ -3,7 +3,10 @@
 
 <div class="vagas-list-container p-4">
   <div class="flex justify-content-between align-items-center mb-4">
-    <h2 class="text-2xl font-bold my-0">Lista de Vagas Abertas</h2>
+    <h2 class="text-2xl font-bold my-0 flex align-items-center">
+      <i class="pi pi-briefcase mr-2 text-primary"></i>
+      Oportunidades Locais (ODS 11)
+    </h2>
     <p-button
       *ngIf="canManageVagas"
       label="Criar Nova Vaga"
@@ -39,26 +42,55 @@
       *ngFor="let vaga of vagas"
       class="col-12 md:col-6 lg:col-4 xl:col-3 p-2"
     >
-      <p-card styleClass="h-full flex flex-column">
-        <ng-template pTemplate="title">
-          <span class="text-xl font-semibold">{{ vaga.titulo }}</span>
-        </ng-template>
-        <ng-template pTemplate="subtitle">
-          <div class="flex align-items-center flex-wrap">
-            <i class="pi pi-building mr-2"></i>
-            <span>{{ vaga.empresa || "Empresa não informada" }}</span>
-            <span *ngIf="vaga.local" class="mx-2">|</span>
-            <i *ngIf="vaga.local" class="pi pi-map-marker mr-1"></i>
-            <span>{{ vaga.local }}</span>
+      <p-card styleClass="h-full flex flex-column shadow-3 border-round-xl">
+        <ng-template pTemplate="header">
+          <div
+            *ngIf="vaga.ehVagaVerde"
+            class="bg-green-100 text-green-800 p-2 text-center font-bold text-sm border-round-top-xl"
+          >
+            <i class="pi pi-verified mr-1"></i> Vaga de Impacto Sustentável
           </div>
         </ng-template>
 
-        <p class="text-sm text-gray-700 mb-3 flex-grow-1">
-          {{ vaga.descricao | slice : 0 : 150
-          }}{{ vaga.descricao.length > 150 ? "..." : "" }}
-        </p>
+        <ng-template pTemplate="title">
+          <span class="text-xl font-semibold">{{ vaga.titulo }}</span>
+        </ng-template>
 
-        <div class="mb-3">
+        <ng-template pTemplate="subtitle">
+          <div class="flex flex-column gap-1">
+            <div class="flex align-items-center text-primary font-medium">
+              <i class="pi pi-building mr-2"></i>
+              <span>{{ vaga.empresa || "Empresa Confidencial" }}</span>
+            </div>
+
+            <div class="flex align-items-center text-gray-200 text-sm mt-1">
+              <i class="pi pi-map-marker mr-2"></i>
+              <span *ngIf="vaga.bairro" class="font-bold mr-1"
+                >{{ vaga.bairro }},</span
+              >
+              <span>{{ vaga.local }}</span>
+              <span *ngIf="vaga.zonaDaCidade" class="ml-1 text-gray-500"
+                >({{ vaga.zonaDaCidade }})</span
+              >
+            </div>
+          </div>
+        </ng-template>
+
+        <div class="mb-3 flex gap-2 flex-wrap">
+          <p-tag
+            *ngIf="vaga.ehVagaVerde"
+            value="Economia Verde"
+            severity="success"
+            icon="pi pi-globe"
+          ></p-tag>
+
+          <p-tag
+            *ngIf="vaga.aceitaRemoto"
+            value="Remoto / Híbrido"
+            severity="info"
+            icon="pi pi-wifi"
+          ></p-tag>
+
           <p-tag
             *ngIf="vaga.tipoContrato"
             [value]="vaga.tipoContrato"
@@ -66,40 +98,51 @@
           ></p-tag>
         </div>
 
+        <p class="text-sm text-white-700 mb-3 flex-grow-1 line-height-3">
+          {{ vaga.descricao | slice : 0 : 150
+          }}{{ vaga.descricao.length > 150 ? "..." : "" }}
+        </p>
+
         <ng-template pTemplate="footer">
-          <div class="flex justify-content-between align-items-center mb-2">
+          <div
+            class="flex justify-content-between align-items-center mb-2 pt-2 border-top-1 border-gray-100"
+          >
             <p-button
               label="Ver Detalhes"
               icon="pi pi-eye"
-              styleClass="p-button-sm p-button-outlined"
+              styleClass="p-button-sm p-button-text"
             ></p-button>
             <p-button
               *ngIf="canInscribeInVagas"
               label="Inscrever-se"
               icon="pi pi-check"
-              styleClass="p-button-sm p-button-success"
+              styleClass="p-button-sm p-button-success border-round-2xl"
               (click)="realizarInscricao(vaga.id)"
               [loading]="isSubmittingInscricaoVaga"
             >
             </p-button>
           </div>
-          <div *ngIf="canManageVagas" class="flex justify-content-end gap-2">
+
+          <div
+            *ngIf="canManageVagas"
+            class="flex justify-content-end gap-2 mt-2"
+          >
             <p-button
               icon="pi pi-pencil"
-              styleClass="p-button-sm p-button-info p-button-outlined"
+              styleClass="p-button-rounded p-button-text p-button-info"
               (click)="abrirModalCriarVaga(vaga)"
               pTooltip="Editar Vaga"
               tooltipPosition="top"
             ></p-button>
             <p-button
               icon="pi pi-trash"
-              styleClass="p-button-sm p-button-danger p-button-outlined"
+              styleClass="p-button-rounded p-button-text p-button-danger"
               (click)="confirmarDelecaoVaga(vaga.id)"
               pTooltip="Deletar Vaga"
               tooltipPosition="top"
             ></p-button>
           </div>
-          <div class="text-xs text-gray-500 mt-2 text-right">
+          <div class="text-xs text-white-400 mt-2 text-right">
             Publicado em: {{ vaga.dataPublicacao | date : "dd/MM/yyyy" }}
           </div>
         </ng-template>
@@ -109,17 +152,20 @@
 
   <div
     *ngIf="!isLoading && !errorMessage && vagas.length === 0"
-    class="text-center py-6"
+    class="text-center py-6 surface-50 border-round-xl mx-4"
   >
-    <i class="pi pi-inbox text-6xl text-gray-400"></i>
-    <p class="text-xl text-gray-600 mt-3">
-      Nenhuma vaga encontrada no momento.
+    <i class="pi pi-search text-6xl text-gray-300 mb-3"></i>
+    <p class="text-xl text-gray-600 font-medium">
+      Nenhuma vaga encontrada na sua região.
+    </p>
+    <p class="text-sm text-gray-500 mb-4">
+      Tente verificar mais tarde por novas oportunidades locais.
     </p>
     <p-button
       label="Atualizar Lista"
       icon="pi pi-refresh"
       (click)="carregarVagas()"
-      styleClass="mt-2"
+      styleClass="p-button-outlined"
     ></p-button>
   </div>
 </div>
@@ -134,58 +180,25 @@
   (onHide)="fecharModalCriarVaga()"
 >
   <form [formGroup]="criarVagaForm" (ngSubmit)="onSubmitCriarVaga()">
-    <div class="p-fluid">
-      <div class="flex flex-col gap-2 mb-3">
-        <label for="tituloVaga">Título da Vaga</label>
+    <div class="p-fluid grid">
+      <div class="field col-12">
+        <label for="tituloVaga" class="font-bold">Título da Vaga</label>
         <input
           pInputText
           id="tituloVaga"
           formControlName="titulo"
           type="text"
-          [ngClass]="{
-            'ng-invalid ng-dirty':
-              fCriarVaga['titulo'].touched && fCriarVaga['titulo'].errors
-          }"
+          placeholder="Ex: Zelador de Praça, Agente de Reciclagem..."
         />
         <small
           *ngIf="fCriarVaga['titulo'].touched && fCriarVaga['titulo'].errors?.['required']"
           class="p-error"
-          >Título é obrigatório.</small
-        >
-        <small
-          *ngIf="fCriarVaga['titulo'].touched && fCriarVaga['titulo'].errors?.['minlength']"
-          class="p-error"
-          >Título deve ter no mínimo 5 caracteres.</small
+          >Obrigatório.</small
         >
       </div>
 
-      <div class="flex flex-col gap-2 mb-3">
-        <label for="descricaoVaga">Descrição Completa</label>
-        <textarea
-          pInputTextarea
-          id="descricaoVaga"
-          formControlName="descricao"
-          [rows]="5"
-          [autoResize]="true"
-          [ngClass]="{
-            'ng-invalid ng-dirty':
-              fCriarVaga['descricao'].touched && fCriarVaga['descricao'].errors
-          }"
-        ></textarea>
-        <small
-          *ngIf="fCriarVaga['descricao'].touched && fCriarVaga['descricao'].errors?.['required']"
-          class="p-error"
-          >Descrição é obrigatória.</small
-        >
-        <small
-          *ngIf="fCriarVaga['descricao'].touched && fCriarVaga['descricao'].errors?.['minlength']"
-          class="p-error"
-          >Descrição deve ter no mínimo 10 caracteres.</small
-        >
-      </div>
-
-      <div class="flex flex-col gap-2 mb-3">
-        <label for="empresaVaga">Nome da Empresa (Opcional)</label>
+      <div class="field col-12 md:col-6">
+        <label for="empresaVaga">Empresa</label>
         <input
           pInputText
           id="empresaVaga"
@@ -194,27 +207,104 @@
         />
       </div>
 
-      <div class="flex flex-col gap-2 mb-3">
-        <label for="localVaga"
-          >Local da Vaga (Ex: Fortaleza, CE ou Remoto)</label
-        >
-        <input pInputText id="localVaga" formControlName="local" type="text" />
-      </div>
-
-      <div class="flex flex-col gap-2 mb-3">
+      <div class="field col-12 md:col-6">
         <label for="tipoContratoVaga">Tipo de Contrato</label>
         <p-dropdown
           id="tipoContratoVaga"
           [options]="tiposContrato"
           formControlName="tipoContrato"
-          placeholder="Selecione o tipo"
+          placeholder="Selecione"
           optionLabel="label"
           optionValue="value"
-          [showClear]="true"
         ></p-dropdown>
       </div>
+
+      <div class="col-12 mt-2 mb-2">
+        <p-message
+          severity="info"
+          text="Preencha o local para conectar moradores próximos à vaga (ODS 11)."
+        ></p-message>
+      </div>
+
+      <div class="field col-12 md:col-4">
+        <label for="bairroVaga" class="font-bold text-primary"
+          >Bairro (Importante)</label
+        >
+        <input
+          pInputText
+          id="bairroVaga"
+          formControlName="bairro"
+          type="text"
+          placeholder="Ex: Bom Jardim"
+        />
+      </div>
+
+      <div class="field col-12 md:col-4">
+        <label for="zonaVaga">Zona da Cidade</label>
+        <p-dropdown
+          id="zonaVaga"
+          [options]="zonasDaCidade"
+          formControlName="zonaDaCidade"
+          placeholder="Selecione a Zona"
+        >
+        </p-dropdown>
+      </div>
+
+      <div class="field col-12 md:col-4">
+        <label for="localVaga">Cidade/Estado</label>
+        <input
+          pInputText
+          id="localVaga"
+          formControlName="local"
+          type="text"
+          placeholder="Ex: Fortaleza - CE"
+        />
+      </div>
+
+      <div class="field col-12 md:col-6 flex align-items-center gap-2 mt-2">
+        <p-checkbox
+          formControlName="ehVagaVerde"
+          [binary]="true"
+          inputId="vagaVerde"
+        ></p-checkbox>
+        <label for="vagaVerde" class="cursor-pointer">
+          <i class="pi pi-verified text-green-500 mr-1"></i> É uma Vaga Verde?
+          (Sustentabilidade)
+        </label>
+      </div>
+
+      <div class="field col-12 md:col-6 flex align-items-center gap-2 mt-2">
+        <p-checkbox
+          formControlName="aceitaRemoto"
+          [binary]="true"
+          inputId="vagaRemoto"
+        ></p-checkbox>
+        <label for="vagaRemoto" class="cursor-pointer">
+          <i class="pi pi-wifi text-blue-500 mr-1"></i> Aceita Trabalho Remoto?
+          (Menos Trânsito)
+        </label>
+      </div>
+
+      <div class="field col-12 mt-3">
+        <label for="descricaoVaga">Descrição Completa</label>
+        <textarea
+          pInputTextarea
+          id="descricaoVaga"
+          formControlName="descricao"
+          [rows]="5"
+          [autoResize]="true"
+        ></textarea>
+        <small
+          *ngIf="fCriarVaga['descricao'].touched && fCriarVaga['descricao'].errors?.['required']"
+          class="p-error"
+          >Obrigatório.</small
+        >
+      </div>
     </div>
-    <div class="flex justify-content-end gap-2 mt-4">
+
+    <div
+      class="flex justify-content-end gap-2 mt-4 pt-3 border-top-1 border-gray-200"
+    >
       <p-button
         type="button"
         label="Cancelar"
@@ -224,8 +314,8 @@
       ></p-button>
       <p-button
         type="submit"
-        [label]="isEditModeVaga ? 'Salvar Alterações' : 'Salvar Vaga'"
-        [icon]="isEditModeVaga ? 'pi pi-save' : 'pi pi-plus-circle'"
+        [label]="isEditModeVaga ? 'Salvar Alterações' : 'Publicar Vaga'"
+        [icon]="isEditModeVaga ? 'pi pi-save' : 'pi pi-send'"
         [loading]="isSubmittingCriarVaga"
       ></p-button>
     </div>

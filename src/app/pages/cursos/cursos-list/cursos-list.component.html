@@ -3,7 +3,10 @@
 
 <div class="cursos-list-container p-4">
   <div class="flex justify-content-between align-items-center mb-4">
-    <h2 class="text-2xl font-bold my-0">Lista de Cursos Disponíveis</h2>
+    <h2 class="text-2xl font-bold my-0 flex align-items-center">
+      <i class="pi pi-book mr-2 text-primary"></i>
+      Capacitação para Sustentabilidade (ODS 11)
+    </h2>
     <p-button
       *ngIf="canManageCursos"
       label="Criar Novo Curso"
@@ -39,63 +42,92 @@
       *ngFor="let curso of cursos"
       class="col-12 md:col-6 lg:col-4 xl:col-3 p-2"
     >
-      <p-card styleClass="h-full flex flex-column">
+      <p-card styleClass="h-full flex flex-column shadow-3 border-round-xl">
+        <ng-template pTemplate="header">
+          <div
+            *ngIf="curso.focadoEmSustentabilidade"
+            class="bg-green-100 text-green-800 p-2 text-center font-bold text-sm border-round-top-xl"
+          >
+            <i class="pi pi-verified mr-1"></i> Curso de Impacto Verde
+          </div>
+        </ng-template>
+
         <ng-template pTemplate="title">
           <span class="text-xl font-semibold">{{ curso.nome }}</span>
         </ng-template>
+
         <ng-template pTemplate="subtitle">
-          <div class="flex align-items-center flex-wrap mb-1">
-            <i class="pi pi-building mr-2"></i>
-            <span>{{ curso.instituicao || "Instituição não informada" }}</span>
-          </div>
-          <div class="flex align-items-center flex-wrap text-sm">
-            <i class="pi pi-clock mr-2"></i>
-            <span>{{ curso.cargaHoraria || "N/A" }}</span>
-            <span class="mx-2">|</span>
-            <p-tag
-              *ngIf="curso.modalidade"
-              [value]="curso.modalidade"
-              [severity]="getSeverityForModalidade(curso.modalidade)"
-            ></p-tag>
-            <span *ngIf="!curso.modalidade">Modalidade N/A</span>
+          <div class="flex flex-column gap-2">
+            <div class="flex align-items-center font-medium text-primary">
+              <i class="pi pi-building mr-2"></i>
+              <span>{{ curso.instituicao || "Instituição Parceira" }}</span>
+            </div>
+
+            <div class="flex gap-2 flex-wrap">
+              <p-tag
+                *ngIf="curso.modalidade"
+                [value]="curso.modalidade"
+                [severity]="getSeverityForModalidade(curso.modalidade)"
+              ></p-tag>
+              <p-tag
+                styleClass="bg-gray-100 text-gray-800"
+                icon="pi pi-clock"
+                [value]="curso.cargaHoraria"
+              >
+              </p-tag>
+            </div>
           </div>
         </ng-template>
 
-        <p class="text-sm text-gray-700 mt-2 mb-3 flex-grow-1">
-          Início em: {{ curso.dataInicio | date : "dd/MM/yyyy" }}
-        </p>
+        <div class="mt-3 mb-3 flex-grow-1">
+          <div
+            *ngIf="curso.impactoComunitario"
+            class="surface-50 p-2 border-round text-sm mb-2 text-white-700"
+          >
+            <i class="pi pi-globe text-green-500 mr-1"></i>
+            <strong>Impacto:</strong> {{ curso.impactoComunitario }}
+          </div>
+
+          <p class="text-sm text-gray-600">
+            <i class="pi pi-calendar mr-1"></i>
+            Início: {{ curso.dataInicio | date : "dd/MM/yyyy" }}
+          </p>
+        </div>
 
         <ng-template pTemplate="footer">
-          <div class="flex justify-content-between align-items-center mb-2">
+          <div
+            class="flex justify-content-between align-items-center mb-2 pt-2 border-top-1 border-gray-100"
+          >
             <p-button
-              label="Ver Detalhes"
+              label="Detalhes"
               icon="pi pi-eye"
-              styleClass="p-button-sm p-button-outlined"
+              styleClass="p-button-sm p-button-text"
             ></p-button>
             <p-button
               *ngIf="canInscribeInCursos"
-              label="Inscrever-se"
+              label="Inscrever"
               icon="pi pi-check"
-              styleClass="p-button-sm p-button-success"
+              styleClass="p-button-sm p-button-success border-round-2xl"
               (click)="realizarInscricaoCurso(curso.id)"
               [loading]="isSubmittingInscricaoCurso"
             >
             </p-button>
           </div>
-          <div *ngIf="canManageCursos" class="flex justify-content-end gap-2">
+          <div
+            *ngIf="canManageCursos"
+            class="flex justify-content-end gap-2 mt-2"
+          >
             <p-button
               icon="pi pi-pencil"
-              styleClass="p-button-sm p-button-info p-button-outlined"
+              styleClass="p-button-rounded p-button-text p-button-info"
               (click)="abrirModalCriarCurso(curso)"
-              pTooltip="Editar Curso"
-              tooltipPosition="top"
+              pTooltip="Editar"
             ></p-button>
             <p-button
               icon="pi pi-trash"
-              styleClass="p-button-sm p-button-danger p-button-outlined"
+              styleClass="p-button-rounded p-button-text p-button-danger"
               (click)="confirmarDelecaoCurso(curso.id)"
-              pTooltip="Deletar Curso"
-              tooltipPosition="top"
+              pTooltip="Excluir"
             ></p-button>
           </div>
         </ng-template>
@@ -105,17 +137,15 @@
 
   <div
     *ngIf="!isLoading && !errorMessage && cursos.length === 0"
-    class="text-center py-6"
+    class="text-center py-6 surface-50 border-round-xl mx-4"
   >
-    <i class="pi pi-book text-6xl text-gray-400"></i>
-    <p class="text-xl text-gray-600 mt-3">
-      Nenhum curso encontrado no momento.
-    </p>
+    <i class="pi pi-book text-6xl text-gray-300 mb-3"></i>
+    <p class="text-xl text-gray-600">Nenhum curso disponível no momento.</p>
     <p-button
       label="Atualizar Lista"
       icon="pi pi-refresh"
       (click)="carregarCursos()"
-      styleClass="mt-2"
+      styleClass="p-button-outlined"
     ></p-button>
   </div>
 </div>
@@ -130,33 +160,25 @@
   (onHide)="fecharModalCriarCurso()"
 >
   <form [formGroup]="criarCursoForm" (ngSubmit)="onSubmitCriarCurso()">
-    <div class="p-fluid">
-      <div class="flex flex-col gap-2 mb-3">
-        <label for="nomeCursoModal">Nome do Curso</label>
+    <div class="p-fluid grid">
+      <div class="field col-12">
+        <label for="nomeCursoModal" class="font-bold">Nome do Curso</label>
         <input
           pInputText
           id="nomeCursoModal"
           formControlName="nome"
           type="text"
-          [ngClass]="{
-            'ng-invalid ng-dirty':
-              fCriarCurso['nome'].touched && fCriarCurso['nome'].errors
-          }"
+          placeholder="Ex: Oficina de Horta Comunitária"
         />
         <small
           *ngIf="fCriarCurso['nome'].touched && fCriarCurso['nome'].errors?.['required']"
           class="p-error"
-          >Nome é obrigatório.</small
-        >
-        <small
-          *ngIf="fCriarCurso['nome'].touched && fCriarCurso['nome'].errors?.['minlength']"
-          class="p-error"
-          >Nome deve ter no mínimo 5 caracteres.</small
+          >Obrigatório.</small
         >
       </div>
 
-      <div class="flex flex-col gap-2 mb-3">
-        <label for="instituicaoCursoModal">Instituição (Opcional)</label>
+      <div class="field col-12 md:col-6">
+        <label for="instituicaoCursoModal">Instituição</label>
         <input
           pInputText
           id="instituicaoCursoModal"
@@ -165,50 +187,75 @@
         />
       </div>
 
-      <div class="flex flex-col gap-2 mb-3">
-        <label for="cargaHorariaCursoModal">Carga Horária (Ex: 40 horas)</label>
+      <div class="field col-12 md:col-6">
+        <label for="cargaHorariaCursoModal">Carga Horária</label>
         <input
           pInputText
           id="cargaHorariaCursoModal"
           formControlName="cargaHoraria"
           type="text"
+          placeholder="Ex: 20h"
         />
       </div>
 
-      <div class="flex flex-col gap-2 mb-3">
+      <div class="field col-12 md:col-6">
         <label for="modalidadeCursoModal">Modalidade</label>
         <p-dropdown
           id="modalidadeCursoModal"
           [options]="modalidadesCurso"
           formControlName="modalidade"
-          placeholder="Selecione a modalidade"
+          placeholder="Selecione"
           optionLabel="label"
           optionValue="value"
-          [showClear]="true"
         ></p-dropdown>
       </div>
 
-      <div class="flex flex-col gap-2 mb-3">
+      <div class="field col-12 md:col-6">
         <label for="dataInicioCursoModal">Data de Início</label>
         <p-calendar
           id="dataInicioCursoModal"
           formControlName="dataInicio"
           [showIcon]="true"
           dateFormat="dd/mm/yy"
-          [ngClass]="{
-            'ng-invalid ng-dirty':
-              fCriarCurso['dataInicio'].touched &&
-              fCriarCurso['dataInicio'].errors
-          }"
         ></p-calendar>
-        <small
-          *ngIf="fCriarCurso['dataInicio'].touched && fCriarCurso['dataInicio'].errors?.['required']"
-          class="p-error"
-          >Data de início é obrigatória.</small
+      </div>
+
+      <div class="col-12 mt-2 mb-2">
+        <p-message
+          severity="success"
+          text="ODS 11: Capacitação para Cidades Sustentáveis"
+        ></p-message>
+      </div>
+
+      <div class="field col-12 md:col-4 flex align-items-center gap-2 mt-4">
+        <p-checkbox
+          formControlName="focadoEmSustentabilidade"
+          [binary]="true"
+          inputId="sustentavelChk"
+        ></p-checkbox>
+        <label
+          for="sustentavelChk"
+          class="cursor-pointer font-bold text-green-700"
         >
+          <i class="pi pi-verified"></i> Curso Focado em Sustentabilidade?
+        </label>
+      </div>
+
+      <div class="field col-12 md:col-8">
+        <label for="impactoCurso">Impacto Comunitário (Descrição Curta)</label>
+        <input
+          pInputText
+          id="impactoCurso"
+          formControlName="impactoComunitario"
+          type="text"
+          placeholder="Ex: Ensina moradores a gerir resíduos e gerar renda."
+        />
       </div>
     </div>
-    <div class="flex justify-content-end gap-2 mt-4">
+
+    <div
+      class="flex justify-content-end gap-2 mt-4 pt-3 border-top-1 border-gray-200"
+    >
       <p-button
         type="button"
         label="Cancelar"
@@ -218,8 +265,8 @@
       ></p-button>
       <p-button
         type="submit"
-        [label]="isEditModeCurso ? 'Salvar Alterações' : 'Salvar Curso'"
-        [icon]="isEditModeCurso ? 'pi pi-save' : 'pi pi-plus-circle'"
+        [label]="isEditModeCurso ? 'Salvar' : 'Criar Curso'"
+        [icon]="isEditModeCurso ? 'pi pi-save' : 'pi pi-check'"
         [loading]="isSubmittingCriarCurso"
       ></p-button>
     </div>

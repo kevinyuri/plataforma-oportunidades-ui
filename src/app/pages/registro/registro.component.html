@@ -1,184 +1,260 @@
 <p-toast></p-toast>
-<div class="flex justify-content-center align-items-center min-h-screen px-3">
-  <p-card header="Criar Nova Conta" styleClass="w-full max-w-50rem">
+<div
+  class="flex justify-content-center align-items-center min-h-screen px-3 surface-ground"
+>
+  <p-card styleClass="w-full max-w-30rem shadow-6 border-round-xl">
+    <div class="text-center mb-4">
+      <i class="pi pi-user-plus text-5xl text-primary mb-2"></i>
+      <h2 class="text-2xl font-bold text-900 m-0">Criar Nova Conta</h2>
+      <p class="text-600 text-sm mt-2">
+        Junte-se à plataforma e conecte-se a oportunidades locais.
+      </p>
+    </div>
+
     <form [formGroup]="registroForm" (ngSubmit)="onSubmit()">
       <div class="p-fluid">
-        <div class="field">
-          <label for="nome" class="block text-900 text-xl font-medium mb-2"
-            >Nome Completo</label
+        <!-- SEÇÃO: DADOS PESSOAIS -->
+        <div class="mb-3">
+          <span class="text-xs font-bold text-500 uppercase tracking-wider"
+            >Dados Pessoais</span
           >
-          <input
-            pInputText
-            id="nome"
-            formControlName="nome"
-            type="text"
-            class="w-full"
-            [ngClass]="{ 'ng-invalid ng-dirty': submitted && f['nome'].errors }"
-          />
-          <small
-            *ngIf="submitted && f['nome'].errors?.['required']"
-            class="p-error block mt-1"
-            >Nome é obrigatório.</small
-          >
-          <small
-            *ngIf="submitted && f['nome'].errors?.['minlength']"
-            class="p-error block mt-1"
-            >Nome deve ter no mínimo 3 caracteres.</small
-          >
-          <small
-            *ngIf="submitted && f['nome'].errors?.['maxlength']"
-            class="p-error block mt-1"
-            >Nome deve ter no máximo 100 caracteres.</small
-          >
+          <hr class="mt-1 mb-3 border-top-1 border-none surface-border" />
         </div>
 
-        <div class="field mt-3">
-          <label for="email" class="block text-900 text-xl font-medium mb-2"
+        <!-- Nome -->
+        <div class="field grid align-items-center">
+          <label for="nome" class="col-12 mb-2 md:col-4 md:mb-0 font-medium"
+            >Nome</label
+          >
+          <div class="col-12 md:col-8">
+            <span class="p-input-icon-left w-full">
+              <i class="pi pi-user"></i>
+              <input
+                pInputText
+                id="nome"
+                formControlName="nome"
+                type="text"
+                class="w-full"
+                placeholder="Seu nome"
+                [ngClass]="{
+                  'ng-invalid ng-dirty': submitted && f['nome'].errors
+                }"
+              />
+            </span>
+            <small
+              *ngIf="submitted && f['nome'].errors?.['required']"
+              class="p-error block mt-1"
+              >Obrigatório.</small
+            >
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="field grid align-items-center">
+          <label for="email" class="col-12 mb-2 md:col-4 md:mb-0 font-medium"
             >E-mail</label
           >
-          <input
-            pInputText
-            id="email"
-            formControlName="email"
-            type="email"
-            class="w-full"
-            placeholder="seuemail@exemplo.com"
-            [ngClass]="{
-              'ng-invalid ng-dirty': submitted && f['email'].errors
-            }"
-          />
-          <small
-            *ngIf="submitted && f['email'].errors?.['required']"
-            class="p-error block mt-1"
-            >E-mail é obrigatório.</small
-          >
-          <small
-            *ngIf="submitted && f['email'].errors?.['email']"
-            class="p-error block mt-1"
-            >Formato de e-mail inválido.</small
-          >
+          <div class="col-12 md:col-8">
+            <span class="p-input-icon-left w-full">
+              <i class="pi pi-envelope"></i>
+              <input
+                pInputText
+                id="email"
+                formControlName="email"
+                type="email"
+                class="w-full"
+                placeholder="email@ex.com"
+                [ngClass]="{
+                  'ng-invalid ng-dirty': submitted && f['email'].errors
+                }"
+              />
+            </span>
+            <small
+              *ngIf="submitted && f['email'].errors"
+              class="p-error block mt-1"
+              >Inválido.</small
+            >
+          </div>
         </div>
 
-        <div class="field mt-3">
-          <label for="senha" class="block text-900 text-xl font-medium mb-2"
-            >Senha</label
+        <!-- Telefone -->
+        <div class="field grid align-items-center">
+          <label for="telefone" class="col-12 mb-2 md:col-4 md:mb-0 font-medium"
+            >Telefone</label
           >
-          <p-password
-            id="senha"
-            formControlName="senha"
-            [toggleMask]="true"
-            [feedback]="true"
-            inputStyleClass="w-full"
-            styleClass="w-full"
-            placeholder="Crie uma senha"
-            promptLabel="Digite uma senha"
-            weakLabel="Fraca"
-            mediumLabel="Média"
-            strongLabel="Forte"
-            [ngClass]="{
-              'ng-invalid ng-dirty': submitted && f['senha'].errors
-            }"
-          ></p-password>
-          <small
-            *ngIf="submitted && f['senha'].errors?.['required']"
-            class="p-error block mt-1"
-            >Senha é obrigatória.</small
-          >
-          <small
-            *ngIf="submitted && f['senha'].errors?.['minlength']"
-            class="p-error block mt-1"
-            >Senha deve ter no mínimo 6 caracteres.</small
-          >
+          <div class="col-12 md:col-8">
+            <span class="p-input-icon-left w-full">
+              <i class="pi pi-phone"></i>
+              <input
+                pInputText
+                id="telefone"
+                formControlName="telefone"
+                type="text"
+                class="w-full"
+                placeholder="(XX) 99999-9999"
+              />
+            </span>
+          </div>
         </div>
 
-        <div class="field mt-3">
-          <label
-            for="confirmarSenha"
-            class="block text-900 text-xl font-medium mb-2"
-            >Confirmar Senha</label
-          >
-          <p-password
-            id="confirmarSenha"
-            formControlName="confirmarSenha"
-            [toggleMask]="true"
-            [feedback]="false"
-            inputStyleClass="w-full"
-            styleClass="w-full"
-            placeholder="Confirme sua senha"
-            [ngClass]="{
-              'ng-invalid ng-dirty':
-                submitted &&
-                (f['confirmarSenha'].errors ||
-                  registroForm.hasError('mismatch'))
-            }"
-          ></p-password>
-          <small
-            *ngIf="submitted && f['confirmarSenha'].errors?.['required']"
-            class="p-error block mt-1"
-            >Confirmação de senha é obrigatória.</small
-          >
-          <small
-            *ngIf="submitted && !f['confirmarSenha'].errors?.['required'] && registroForm.hasError('mismatch')"
-            class="p-error block mt-1"
-            >As senhas não coincidem.</small
-          >
-        </div>
-
-        <div class="field mt-3">
-          <label for="perfil" class="block text-900 text-xl font-medium mb-2"
+        <!-- Perfil -->
+        <div class="field grid align-items-center">
+          <label for="perfil" class="col-12 mb-2 md:col-4 md:mb-0 font-medium"
             >Eu sou</label
           >
-          <p-dropdown
-            id="perfil"
-            [options]="perfis"
-            formControlName="perfil"
-            placeholder="Selecione seu perfil"
-            optionLabel="label"
-            optionValue="value"
+          <div class="col-12 md:col-8">
+            <p-dropdown
+              id="perfil"
+              [options]="perfis"
+              formControlName="perfil"
+              placeholder="Selecione..."
+              optionLabel="label"
+              optionValue="value"
+              [showClear]="true"
+              styleClass="w-full"
+              [ngClass]="{
+                'ng-invalid ng-dirty': submitted && f['perfil'].errors
+              }"
+            ></p-dropdown>
+            <small
+              *ngIf="submitted && f['perfil'].errors"
+              class="p-error block mt-1"
+              >Selecione um.</small
+            >
+          </div>
+        </div>
+
+        <!-- SEÇÃO: LOCALIZAÇÃO (ODS 11) -->
+        <div class="mt-4 mb-3">
+          <span
+            class="text-xs font-bold text-500 uppercase tracking-wider flex align-items-center gap-2"
+          >
+            <i class="pi pi-globe text-green-500"></i>
+            Local (ODS 11)
+          </span>
+          <hr class="mt-1 mb-2 border-top-1 border-none surface-border" />
+        </div>
+
+        <!-- Info Box simplificado para ocupar menos espaço vertical -->
+        <div
+          class="flex align-items-center p-2 bg-blue-50 border-round mb-3 border-1 border-blue-100 text-xs text-blue-900"
+        >
+          <i class="pi pi-info-circle text-blue-500 mr-2"></i>
+          <span>Informe o bairro para sugerirmos vagas próximas.</span>
+        </div>
+
+        <div class="field grid align-items-center">
+          <label
+            for="bairroResidencia"
+            class="col-12 mb-2 md:col-4 md:mb-0 font-bold text-900"
+            >Bairro <span class="text-red-500">*</span></label
+          >
+          <div class="col-12 md:col-8">
+            <span class="p-input-icon-left w-full">
+              <i class="pi pi-map-marker text-primary"></i>
+              <input
+                pInputText
+                id="bairroResidencia"
+                formControlName="bairroResidencia"
+                type="text"
+                class="w-full"
+                placeholder="Ex: Aldeota"
+                [ngClass]="{
+                  'ng-invalid ng-dirty':
+                    submitted && f['bairroResidencia'].errors
+                }"
+              />
+            </span>
+            <small
+              *ngIf="submitted && f['bairroResidencia'].errors?.['required']"
+              class="p-error block mt-1"
+            >
+              Obrigatório.
+            </small>
+          </div>
+        </div>
+
+        <!-- SEÇÃO: SEGURANÇA -->
+        <div class="mt-4 mb-3">
+          <span class="text-xs font-bold text-500 uppercase tracking-wider"
+            >Segurança</span
+          >
+          <hr class="mt-1 mb-3 border-top-1 border-none surface-border" />
+        </div>
+
+        <!-- Senhas -->
+        <div class="field grid align-items-center">
+          <label for="senha" class="col-12 mb-2 md:col-4 md:mb-0 font-medium"
+            >Senha</label
+          >
+          <div class="col-12 md:col-8">
+            <p-password
+              id="senha"
+              formControlName="senha"
+              [toggleMask]="true"
+              [feedback]="false"
+              placeholder="******"
+              styleClass="w-full"
+              inputStyleClass="w-full"
+              [ngClass]="{
+                'ng-invalid ng-dirty': submitted && f['senha'].errors
+              }"
+            ></p-password>
+            <small
+              *ngIf="submitted && f['senha'].errors"
+              class="p-error block mt-1"
+              >Mínimo 6 dígitos.</small
+            >
+          </div>
+        </div>
+
+        <div class="field grid align-items-center">
+          <label
+            for="confirmarSenha"
+            class="col-12 mb-2 md:col-4 md:mb-0 font-medium text-sm"
+            >Confirmar</label
+          >
+          <div class="col-12 md:col-8">
+            <p-password
+              id="confirmarSenha"
+              formControlName="confirmarSenha"
+              [toggleMask]="true"
+              [feedback]="false"
+              placeholder="******"
+              styleClass="w-full"
+              inputStyleClass="w-full"
+              [ngClass]="{
+                'ng-invalid ng-dirty':
+                  submitted &&
+                  (f['confirmarSenha'].errors ||
+                    registroForm.hasError('mismatch'))
+              }"
+            ></p-password>
+            <small
+              *ngIf="submitted && registroForm.hasError('mismatch')"
+              class="p-error block mt-1"
+              >Senhas não conferem.</small
+            >
+          </div>
+        </div>
+
+        <!-- Botão -->
+        <div class="mt-4">
+          <p-button
+            label="Criar Conta"
+            icon="pi pi-check"
+            type="submit"
             styleClass="w-full"
-            [ngClass]="{
-              'ng-invalid ng-dirty': submitted && f['perfil'].errors
-            }"
-          ></p-dropdown>
-          <small
-            *ngIf="submitted && f['perfil'].errors?.['required']"
-            class="p-error block mt-1"
-            >Perfil é obrigatório.</small
-          >
+            [loading]="isLoading"
+          ></p-button>
         </div>
 
-        <div class="field mt-3">
-          <label for="telefone" class="block text-900 text-xl font-medium mb-2"
-            >Telefone (Opcional)</label
-          >
-          <input
-            pInputText
-            id="telefone"
-            formControlName="telefone"
-            type="text"
-            class="w-full"
-          />
-          <small
-            *ngIf="submitted && f['telefone'].errors?.['maxlength']"
-            class="p-error block mt-1"
-            >Telefone deve ter no máximo 20 caracteres.</small
-          >
-        </div>
-
-        <p-button
-          label="Criar Conta"
-          icon="pi pi-user-plus"
-          type="submit"
-          styleClass="w-full text-xl mt-4"
-          [loading]="isLoading"
-        ></p-button>
-
-        <div class="mt-4 text-center">
-          <span class="text-600 font-medium">Já tem uma conta?</span>
+        <div class="text-center mt-3">
+          <span class="text-600 font-medium text-sm">Já possui cadastro?</span>
           <a
             [routerLink]="['/auth/login']"
-            class="font-medium no-underline text-blue-500 ml-1 cursor-pointer"
-            >Faça Login</a
+            class="font-bold no-underline text-primary ml-1 cursor-pointer hover:underline text-sm"
+            >Fazer Login</a
           >
         </div>
       </div>
